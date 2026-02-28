@@ -63,4 +63,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(project(":core:ui"))
     implementation(project(":core:permissions"))
+    implementation(project(":data:local"))
+    implementation(project(":data:preferences"))
+    implementation(libs.androidx.room.runtime)
 }

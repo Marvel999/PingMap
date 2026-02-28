@@ -14,3 +14,6 @@
 .cxx
 local.properties
 .idea/
+.kotlin/
+core/permissions/build
+core/ui/build

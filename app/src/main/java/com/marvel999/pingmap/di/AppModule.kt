@@ -1,6 +1,7 @@
 package com.marvel999.pingmap.di
 
 import android.app.Application
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -11,4 +12,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideApplication(application: Application): Application = application
+
+    @Provides
+    @Singleton
+    fun provideContext(application: Application): Context = application.applicationContext
 }

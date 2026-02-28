@@ -24,4 +24,6 @@ include(":app")
 include(":core:ui")
 include(":core:network")
 include(":core:permissions")
+include(":data:local")
+include(":data:preferences")
  
