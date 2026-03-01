@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marvel999.pingmap.data.local.dao.DeviceDao
 import com.marvel999.pingmap.data.local.dao.SpeedTestDao
+import com.marvel999.pingmap.data.preferences.UserPreferencesDataStore
+import com.marvel999.pingmap.service.monitor.MonitorScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,12 +25,15 @@ data class HomeUiState(
     val lastDownloadMbps: Double? = null,
     val lastUploadMbps: Double? = null,
     val deviceCount: Int = 0,
-    val networkStatusMessage: String = "Checking..."
+    val networkStatusMessage: String = "Checking...",
+    val backgroundMonitoringEnabled: Boolean = false,
+    val notificationDeniedMessage: String? = null
 )
 
 class HomeViewModel @javax.inject.Inject constructor(
     private val speedTestDao: SpeedTestDao,
     private val deviceDao: DeviceDao,
+    private val preferences: UserPreferencesDataStore,
     private val context: Context
 ) : ViewModel() {
 
@@ -36,6 +41,12 @@ class HomeViewModel @javax.inject.Inject constructor(
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            preferences.backgroundMonitoringEnabled.collect { enabled ->
+                _state.update { it.copy(backgroundMonitoringEnabled = enabled) }
+                if (enabled) MonitorScheduler.start(context)
+            }
+        }
         viewModelScope.launch {
             combine(
                 speedTestDao.getLatest(),
@@ -58,8 +69,27 @@ class HomeViewModel @javax.inject.Inject constructor(
                         else -> "Weak signal"
                     }
                 )
-            }.collect { _state.update { _ -> it } }
+            }.collect { new -> _state.update { prev -> new.copy(backgroundMonitoringEnabled = prev.backgroundMonitoringEnabled, notificationDeniedMessage = prev.notificationDeniedMessage) } }
         }
+    }
+
+    fun startMonitoring() {
+        viewModelScope.launch {
+            MonitorScheduler.start(context)
+            preferences.setBackgroundMonitoringEnabled(true)
+            _state.update { it.copy(notificationDeniedMessage = null) }
+        }
+    }
+
+    fun stopMonitoring() {
+        viewModelScope.launch {
+            MonitorScheduler.stop(context)
+            preferences.setBackgroundMonitoringEnabled(false)
+        }
+    }
+
+    fun setNotificationDeniedMessage(message: String?) {
+        _state.update { it.copy(notificationDeniedMessage = message) }
     }
 
     private fun getCurrentWifiInfo(): WifiInfoResult {

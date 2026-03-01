@@ -1,5 +1,9 @@
 package com.marvel999.pingmap.ui.home
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,6 +31,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.marvel999.pingmap.core.ui.charts.SignalArc
 import com.marvel999.pingmap.core.ui.components.PingMapButton
@@ -40,6 +46,30 @@ fun HomeScreen(
     onNavigate: (String) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.startMonitoring()
+        } else {
+            viewModel.setNotificationDeniedMessage(
+                "Notifications are off — background checks won't notify you."
+            )
+        }
+    }
+
+    fun onMonitoringToggle(enabled: Boolean) {
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                viewModel.startMonitoring()
+            }
+        } else {
+            viewModel.stopMonitoring()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -145,6 +175,36 @@ fun HomeScreen(
                 )
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = { onNavigate(NavTab.DEVICES.route) }) { Text("See all") }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        PingMapCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Background monitoring", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Get notified when you lose internet (runs in background)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = PingMapColors.TextSecondary
+                    )
+                }
+                Switch(
+                    checked = state.backgroundMonitoringEnabled,
+                    onCheckedChange = { onMonitoringToggle(it) }
+                )
+            }
+            state.notificationDeniedMessage?.let { msg ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    msg,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PingMapColors.SoftAmber
+                )
             }
         }
 

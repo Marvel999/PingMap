@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ class UserPreferencesDataStore(private val context: Context) {
     private object Keys {
         val speedTestServerUrl = stringPreferencesKey("speed_test_server_url")
         val lastSignalMapSessionId = stringPreferencesKey("last_signal_map_session_id")
+        val backgroundMonitoringEnabled = booleanPreferencesKey("background_monitoring_enabled")
     }
 
     val speedTestServerUrl: Flow<String> = context.dataStore.data
@@ -57,6 +59,19 @@ class UserPreferencesDataStore(private val context: Context) {
             } else {
                 prefs.remove(Keys.lastSignalMapSessionId)
             }
+        }
+    }
+
+    val backgroundMonitoringEnabled: Flow<Boolean> = context.dataStore.data
+        .catch { e ->
+            if (e is IOException) emit(emptyPreferences())
+            else throw e
+        }
+        .map { prefs -> prefs[Keys.backgroundMonitoringEnabled] ?: false }
+
+    suspend fun setBackgroundMonitoringEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.backgroundMonitoringEnabled] = enabled
         }
     }
 

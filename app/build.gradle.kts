@@ -74,6 +74,7 @@ dependencies {
     implementation(project(":feature:ping"))
     implementation(project(":feature:port-scanner"))
     implementation(project(":feature:signal-map"))
+    implementation(project(":service:monitor"))
     implementation(libs.androidx.room.runtime)
     implementation(libs.okhttp)
 }

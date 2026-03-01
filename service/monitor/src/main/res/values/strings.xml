@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_monitor_name">Network monitoring</string>
+    <string name="notification_channel_monitor_desc">Shows when background network monitoring is active</string>
+    <string name="notification_monitor_connected_title">PingMap — Connected</string>
+    <string name="notification_monitor_disconnected_title">PingMap — No connection</string>
+    <string name="notification_monitor_ongoing_text">Monitoring your network in the background</string>
+    <string name="notification_disconnected_message">Your device lost internet connection.</string>
+</resources>
