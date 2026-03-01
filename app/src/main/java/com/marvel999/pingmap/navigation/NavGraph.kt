@@ -21,6 +21,12 @@ import com.marvel999.pingmap.feature.speedtest.ui.SpeedTestScreen
 import com.marvel999.pingmap.feature.speedtest.ui.SpeedTestViewModel
 import com.marvel999.pingmap.feature.devices.ui.DeviceListScreen
 import com.marvel999.pingmap.feature.devices.ui.DeviceDiscoveryViewModel
+import com.marvel999.pingmap.feature.ping.ui.PingScreen
+import com.marvel999.pingmap.feature.ping.ui.PingViewModel
+import com.marvel999.pingmap.feature.portscanner.ui.PortScanScreen
+import com.marvel999.pingmap.feature.portscanner.ui.PortScanViewModel
+import com.marvel999.pingmap.feature.signalmap.ui.SignalMapScreen
+import com.marvel999.pingmap.feature.signalmap.ui.SignalMapViewModel
 import androidx.lifecycle.ViewModelProvider
 
 @Composable
@@ -83,6 +89,18 @@ fun PingMapNavGraph(
             }
             composable(NavTab.TOOLS.route) {
                 ToolsScreen(onNavigate = { route -> navController.navigate(route) })
+            }
+            composable("ping") {
+                val vm = viewModel<PingViewModel>(factory = viewModelFactory)
+                PingScreen(viewModel = vm)
+            }
+            composable("port_scan") {
+                val vm = viewModel<PortScanViewModel>(factory = viewModelFactory)
+                PortScanScreen(viewModel = vm)
+            }
+            composable("signal_map") {
+                val vm = viewModel<SignalMapViewModel>(factory = viewModelFactory)
+                SignalMapScreen(viewModel = vm)
             }
         }
     }

@@ -18,7 +18,13 @@ import javax.inject.Singleton
         com.marvel999.pingmap.feature.speedtest.di.SpeedTestFeatureModule::class,
         com.marvel999.pingmap.feature.speedtest.di.SpeedTestProviderModule::class,
         com.marvel999.pingmap.feature.devices.di.DeviceDiscoveryFeatureModule::class,
-        com.marvel999.pingmap.feature.devices.di.DeviceDiscoveryProviderModule::class
+        com.marvel999.pingmap.feature.devices.di.DeviceDiscoveryProviderModule::class,
+        com.marvel999.pingmap.feature.ping.di.PingFeatureModule::class,
+        com.marvel999.pingmap.feature.ping.di.PingProviderModule::class,
+        com.marvel999.pingmap.feature.portscanner.di.PortScannerFeatureModule::class,
+        com.marvel999.pingmap.feature.portscanner.di.PortScannerProviderModule::class,
+        com.marvel999.pingmap.feature.signalmap.di.SignalMapFeatureModule::class,
+        com.marvel999.pingmap.feature.signalmap.di.SignalMapProviderModule::class
     ]
 )
 interface AppComponent {

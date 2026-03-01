@@ -30,4 +30,6 @@ include(":core:di")
 include(":feature:wifi-scanner")
 include(":feature:speed-test")
 include(":feature:device-discovery")
- 
+include(":feature:ping")
+include(":feature:port-scanner")
+include(":feature:signal-map")

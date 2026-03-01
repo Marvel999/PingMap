@@ -71,6 +71,9 @@ dependencies {
     implementation(project(":feature:wifi-scanner"))
     implementation(project(":feature:speed-test"))
     implementation(project(":feature:device-discovery"))
+    implementation(project(":feature:ping"))
+    implementation(project(":feature:port-scanner"))
+    implementation(project(":feature:signal-map"))
     implementation(libs.androidx.room.runtime)
     implementation(libs.okhttp)
 }
