@@ -4,7 +4,8 @@ import kotlinx.coroutines.flow.Flow
 
 data class SpeedTestProgress(
     val phase: String,
-    val currentMbps: Double = 0.0
+    val currentMbps: Double = 0.0,
+    val result: SpeedTestResult? = null
 )
 
 interface SpeedTestRepository {

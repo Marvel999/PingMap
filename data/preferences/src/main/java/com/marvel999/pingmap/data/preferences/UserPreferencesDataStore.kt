@@ -76,6 +76,6 @@ class UserPreferencesDataStore(private val context: Context) {
     }
 
     companion object {
-        const val DEFAULT_SPEED_TEST_URL = "https://speed.cloudflare.com/__down"
+        const val DEFAULT_SPEED_TEST_URL = "https://speed.cloudflare.com/__down?bytes=25000000"
     }
 }

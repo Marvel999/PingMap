@@ -54,6 +54,35 @@ fun SpeedTestScreen(viewModel: SpeedTestViewModel) {
             isRunning = state.isRunning
         )
 
+        state.result?.let { result ->
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PingMapCard(modifier = Modifier.weight(1f)) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            formatMbps(result.downloadMbps),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = PingMapColors.SoftBlue
+                        )
+                        Text("Download Mbps", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                PingMapCard(modifier = Modifier.weight(1f)) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            formatMbps(result.uploadMbps),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = PingMapColors.LavenderPurple
+                        )
+                        Text("Upload Mbps", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+
         Spacer(Modifier.height(24.dp))
 
         PingMapButton(
@@ -170,4 +199,10 @@ private fun SpeedHistoryRow(result: SpeedTestResult) {
         Text("↑ ${"%.1f".format(result.uploadMbps)} Mbps", style = MaterialTheme.typography.bodyMedium)
         Text("${result.pingMs} ms", style = MaterialTheme.typography.labelSmall)
     }
+}
+
+private fun formatMbps(value: Double): String {
+    if (value.isNaN() || value.isInfinite() || value < 0) return "--"
+    if (value == 0.0) return "0.0"
+    return "%.1f".format(value)
 }

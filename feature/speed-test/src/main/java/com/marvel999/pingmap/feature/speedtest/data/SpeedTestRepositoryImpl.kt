@@ -49,7 +49,7 @@ override fun runTest(testUrl: String): Flow<SpeedTestProgress> = callbackFlow {
             timestamp = System.currentTimeMillis()
         )
         speedTestDao.insert(result.toEntity())
-        trySend(SpeedTestProgress("Done", downloadMbps))
+        trySend(SpeedTestProgress("Done", downloadMbps, result = result))
         close()
         awaitClose { }
     }.flowOn(Dispatchers.IO)
@@ -83,6 +83,7 @@ override fun runTest(testUrl: String): Flow<SpeedTestProgress> = callbackFlow {
         val startTime = System.currentTimeMillis()
         try {
             okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext 0.0
                 val body = response.body ?: return@withContext 0.0
                 val buffer = ByteArray(8192)
                 body.byteStream().use { input ->
@@ -102,6 +103,7 @@ override fun runTest(testUrl: String): Flow<SpeedTestProgress> = callbackFlow {
             return@withContext 0.0
         }
         val totalSec = (System.currentTimeMillis() - startTime) / 1000.0
+        if (totalSec <= 0) return@withContext 0.0
         (totalBytes * 8) / (totalSec * 1_000_000)
     }
 

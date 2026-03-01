@@ -115,7 +115,7 @@ fun HomeScreen(
             PingMapCard(modifier = Modifier.weight(1f)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        state.lastDownloadMbps?.let { "%.1f".format(it) } ?: "--",
+                        formatMbps(state.lastDownloadMbps),
                         style = MaterialTheme.typography.headlineMedium,
                         color = PingMapColors.SoftBlue
                     )
@@ -125,12 +125,32 @@ fun HomeScreen(
             PingMapCard(modifier = Modifier.weight(1f)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        state.lastUploadMbps?.let { "%.1f".format(it) } ?: "--",
+                        formatMbps(state.lastUploadMbps),
                         style = MaterialTheme.typography.headlineMedium,
                         color = PingMapColors.LavenderPurple
                     )
                     Text("Upload Mbps", style = MaterialTheme.typography.labelSmall)
                 }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                state.lastSpeedTestTimestamp?.let { formatTimeAgo(it) } ?: "No speed test yet",
+                style = MaterialTheme.typography.labelSmall,
+                color = PingMapColors.TextSecondary
+            )
+            state.nextRefreshInSeconds?.let { sec ->
+                Text(
+                    "Next refresh in ${sec}s",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PingMapColors.TextSecondary
+                )
             }
         }
 
@@ -217,5 +237,23 @@ private fun LabeledValue(label: String, value: String) {
     Column {
         Text(label, style = MaterialTheme.typography.labelSmall)
         Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun formatMbps(value: Double?): String {
+    if (value == null) return "--"
+    if (value.isNaN() || value.isInfinite() || value <= 0) return "--"
+    return "%.1f".format(value)
+}
+
+private fun formatTimeAgo(timestampMs: Long): String {
+    val ageSec = (System.currentTimeMillis() - timestampMs) / 1000
+    return when {
+        ageSec < 60 -> "Speed test: just now"
+        ageSec < 120 -> "Speed test: 1 min ago"
+        ageSec < 3600 -> "Speed test: ${ageSec / 60} min ago"
+        ageSec < 7200 -> "Speed test: 1 hr ago"
+        ageSec < 86400 -> "Speed test: ${ageSec / 3600} hr ago"
+        else -> "Speed test: ${ageSec / 86400} day(s) ago"
     }
 }

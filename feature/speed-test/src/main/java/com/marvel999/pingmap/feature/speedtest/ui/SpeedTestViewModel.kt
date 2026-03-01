@@ -73,9 +73,8 @@ class SpeedTestViewModel @javax.inject.Inject constructor(
                         )
                     }
                     if (phase == TestPhase.DONE) {
-                        speedTestRepository.getLatestResult().first()?.let { latest ->
-                            _state.update { it.copy(result = latest) }
-                        }
+                        val latest = progress.result ?: speedTestRepository.getLatestResult().first()
+                        latest?.let { _state.update { it.copy(result = latest) } }
                         speedTestRepository.getHistory(10).first().let { list ->
                             _state.update { it.copy(history = list) }
                         }

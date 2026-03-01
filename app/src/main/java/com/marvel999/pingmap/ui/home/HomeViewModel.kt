@@ -9,10 +9,13 @@ import com.marvel999.pingmap.data.local.dao.DeviceDao
 import com.marvel999.pingmap.data.local.dao.SpeedTestDao
 import com.marvel999.pingmap.data.preferences.UserPreferencesDataStore
 import com.marvel999.pingmap.service.monitor.MonitorScheduler
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,6 +27,8 @@ data class HomeUiState(
     val localIp: String = "-",
     val lastDownloadMbps: Double? = null,
     val lastUploadMbps: Double? = null,
+    val lastSpeedTestTimestamp: Long? = null,
+    val nextRefreshInSeconds: Int? = null,
     val deviceCount: Int = 0,
     val networkStatusMessage: String = "Checking...",
     val backgroundMonitoringEnabled: Boolean = false,
@@ -40,11 +45,29 @@ class HomeViewModel @javax.inject.Inject constructor(
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
+    private var monitoringRefreshJob: Job? = null
+
     init {
         viewModelScope.launch {
             preferences.backgroundMonitoringEnabled.collect { enabled ->
                 _state.update { it.copy(backgroundMonitoringEnabled = enabled) }
                 if (enabled) MonitorScheduler.start(context)
+                monitoringRefreshJob?.cancel()
+                monitoringRefreshJob = null
+                if (enabled) {
+                    monitoringRefreshJob = viewModelScope.launch {
+                        refreshWifiInfo()
+                        while (true) {
+                            _state.update { it.copy(nextRefreshInSeconds = 2) }
+                            delay(1_000)
+                            _state.update { it.copy(nextRefreshInSeconds = 1) }
+                            delay(1_000)
+                            refreshWifiInfo()
+                        }
+                    }
+                } else {
+                    _state.update { it.copy(nextRefreshInSeconds = null) }
+                }
             }
         }
         viewModelScope.launch {
@@ -61,6 +84,7 @@ class HomeViewModel @javax.inject.Inject constructor(
                     localIp = wifiInfo.localIp,
                     lastDownloadMbps = latestSpeed?.downloadMbps,
                     lastUploadMbps = latestSpeed?.uploadMbps,
+                    lastSpeedTestTimestamp = latestSpeed?.timestamp,
                     deviceCount = devices.size,
                     networkStatusMessage = when {
                         wifiInfo.ssid == "Not connected" -> "Connect to Wi‑Fi to see details"
@@ -69,7 +93,7 @@ class HomeViewModel @javax.inject.Inject constructor(
                         else -> "Weak signal"
                     }
                 )
-            }.collect { new -> _state.update { prev -> new.copy(backgroundMonitoringEnabled = prev.backgroundMonitoringEnabled, notificationDeniedMessage = prev.notificationDeniedMessage) } }
+            }.collect { new -> _state.update { prev -> new.copy(backgroundMonitoringEnabled = prev.backgroundMonitoringEnabled, notificationDeniedMessage = prev.notificationDeniedMessage, nextRefreshInSeconds = prev.nextRefreshInSeconds) } }
         }
     }
 
@@ -90,6 +114,29 @@ class HomeViewModel @javax.inject.Inject constructor(
 
     fun setNotificationDeniedMessage(message: String?) {
         _state.update { it.copy(notificationDeniedMessage = message) }
+    }
+
+    private suspend fun refreshWifiInfo() {
+        val wifi = getCurrentWifiInfo()
+        val latestSpeed = speedTestDao.getLatest().first()
+        _state.update { prev ->
+            prev.copy(
+                ssid = wifi.ssid,
+                signalQuality = wifi.quality,
+                band = wifi.band,
+                security = wifi.security,
+                localIp = wifi.localIp,
+                lastDownloadMbps = latestSpeed?.downloadMbps,
+                lastUploadMbps = latestSpeed?.uploadMbps,
+                lastSpeedTestTimestamp = latestSpeed?.timestamp,
+                networkStatusMessage = when {
+                    wifi.ssid == "Not connected" -> "Connect to Wi‑Fi to see details"
+                    wifi.quality >= 70 -> "Your network looks good"
+                    wifi.quality >= 40 -> "Fair signal — try moving closer to the router"
+                    else -> "Weak signal"
+                }
+            )
+        }
     }
 
     private fun getCurrentWifiInfo(): WifiInfoResult {
