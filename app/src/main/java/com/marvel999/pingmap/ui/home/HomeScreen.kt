@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.marvel999.pingmap.core.ui.charts.SignalArc
 import com.marvel999.pingmap.core.ui.components.PingMapButton
 import com.marvel999.pingmap.core.ui.components.PingMapCard
 import com.marvel999.pingmap.core.ui.components.SignalStrengthBar
@@ -57,12 +58,7 @@ fun HomeScreen(
 
         PingMapCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.material3.Icon(
-                    Icons.Outlined.Wifi,
-                    contentDescription = null,
-                    tint = PingMapColors.signalColor(state.signalQuality),
-                    modifier = Modifier.size(32.dp)
-                )
+                SignalArc(quality = state.signalQuality, modifier = Modifier.size(100.dp))
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(state.ssid, style = MaterialTheme.typography.titleMedium)
@@ -70,8 +66,12 @@ fun HomeScreen(
                         "${state.band} · ${state.security}",
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    Text(
+                        "Based on your current WiFi signal",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PingMapColors.TextSecondary
+                    )
                 }
-                SignalStrengthBar(state.signalQuality)
             }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {

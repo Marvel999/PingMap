@@ -26,8 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.marvel999.pingmap.core.ui.charts.SpeedHistoryChart
 import com.marvel999.pingmap.core.ui.components.PingMapButton
 import com.marvel999.pingmap.core.ui.components.PingMapCard
+import com.marvel999.pingmap.core.ui.components.SectionHeader
 import com.marvel999.pingmap.core.ui.theme.PingMapColors
 import com.marvel999.pingmap.feature.speedtest.domain.SpeedTestResult
 
@@ -42,7 +44,7 @@ fun SpeedTestScreen(viewModel: SpeedTestViewModel) {
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
-        Text("Speed Test", style = MaterialTheme.typography.headlineMedium)
+        SectionHeader("Speed Test", "Measure download and upload speed")
         Spacer(Modifier.height(24.dp))
 
         SpeedGauge(
@@ -69,11 +71,27 @@ fun SpeedTestScreen(viewModel: SpeedTestViewModel) {
 
         state.result?.let { VerdictCard(it) }
 
-        if (state.history.isNotEmpty()) {
-            Spacer(Modifier.height(24.dp))
-            Text("History", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            state.history.take(5).forEach { SpeedHistoryRow(it) }
+        Spacer(Modifier.height(24.dp))
+        SectionHeader("Speed history", "Last tests — download and upload (Mbps)")
+        Spacer(Modifier.height(8.dp))
+        if (state.history.isEmpty() && !state.isRunning) {
+            PingMapCard {
+                Text(
+                    "No speed tests yet. Run a test above to see history here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PingMapColors.TextSecondary
+                )
+            }
+        } else if (state.isRunning && state.history.isEmpty()) {
+            PingMapCard {
+                Text("Running first test…", style = MaterialTheme.typography.bodyMedium)
+            }
+        } else {
+            SpeedHistoryChart(
+                downloadHistory = state.history.take(7).map { it.downloadMbps.toFloat() },
+                uploadHistory = state.history.take(7).map { it.uploadMbps.toFloat() },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         Spacer(Modifier.height(80.dp))

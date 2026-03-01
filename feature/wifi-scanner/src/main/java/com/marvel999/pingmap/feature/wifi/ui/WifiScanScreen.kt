@@ -35,8 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.marvel999.pingmap.core.ui.charts.ChannelCongestionChart
 import com.marvel999.pingmap.core.ui.components.PingMapCard
 import com.marvel999.pingmap.core.ui.components.SectionHeader
+import com.marvel999.pingmap.core.ui.components.ShimmerCard
 import com.marvel999.pingmap.core.ui.components.SignalStrengthBar
 import com.marvel999.pingmap.core.ui.theme.PingMapColors
 import com.marvel999.pingmap.feature.wifi.domain.WifiNetwork
@@ -145,17 +147,17 @@ fun WifiScanScreen(
                 }
                 if (state.channelCongestion.isNotEmpty()) {
                     item {
-                        Spacer(Modifier.height(8.dp))
-                        SectionHeader("Channel congestion", "Fewer networks = better")
-                        state.channelCongestion.toList().sortedBy { it.first }.forEach { (ch, count) ->
-                            Row(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Ch $ch", modifier = Modifier.width(40.dp), style = MaterialTheme.typography.bodyMedium)
-                                Text("$count network(s)", style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
+                        Spacer(Modifier.height(16.dp))
+                        ChannelCongestionChart(
+                            congestion = state.channelCongestion,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                if (state.isScanning && state.networks.isEmpty()) {
+                    item {
+                        Spacer(Modifier.height(12.dp))
+                        ShimmerCard()
                     }
                 }
             }

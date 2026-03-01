@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.marvel999.pingmap.core.ui.charts.PingLineChart
 import com.marvel999.pingmap.core.ui.components.PingMapButton
 import com.marvel999.pingmap.core.ui.components.PingMapCard
 import com.marvel999.pingmap.core.ui.components.SectionHeader
@@ -64,7 +65,24 @@ fun PingScreen(viewModel: PingViewModel) {
             Text(msg, style = MaterialTheme.typography.bodyMedium, color = PingMapColors.SoftRed)
         }
 
-        state.result?.let { ResultCard(it) }
+        state.result?.let { result ->
+            ResultCard(result)
+            if (result.packets.isNotEmpty()) {
+                Spacer(Modifier.height(16.dp))
+                Text("RTT over time", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(8.dp))
+                PingLineChart(packets = result.packets, modifier = Modifier.fillMaxWidth())
+            }
+        }
+        if (state.result == null && !state.isRunning) {
+            PingMapCard {
+                Text(
+                    "Enter a host and tap Start Ping to see latency and a chart.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PingMapColors.TextSecondary
+                )
+            }
+        }
         Spacer(Modifier.height(80.dp))
     }
 }
