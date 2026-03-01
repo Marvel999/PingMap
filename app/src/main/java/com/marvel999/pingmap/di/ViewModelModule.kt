@@ -10,6 +10,7 @@ object ViewModelModule {
 
     @Provides
     @Singleton
-    fun provideViewModelFactory(): ViewModelFactory =
-        ViewModelFactory(emptyMap())
+    fun provideViewModelFactory(
+        creators: Map<Class<out ViewModel>, @JvmSuppressWildcards javax.inject.Provider<ViewModel>>
+    ): ViewModelFactory = ViewModelFactory(creators)
 }

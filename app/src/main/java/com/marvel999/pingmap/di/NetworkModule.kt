@@ -1,7 +1,5 @@
 package com.marvel999.pingmap.di
 
-import android.app.Application
-import android.content.Context
 import com.marvel999.pingmap.core.network.OkHttpProvider
 import dagger.Module
 import dagger.Provides
@@ -9,11 +7,7 @@ import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
 @Module
-object AppModule {
-
-    @Provides
-    @Singleton
-    fun provideContext(application: Application): Context = application.applicationContext
+object NetworkModule {
 
     @Provides
     @Singleton
