@@ -20,9 +20,12 @@ data class SpeedTestUiState(
     val isRunning: Boolean = false,
     val phase: TestPhase = TestPhase.IDLE,
     val currentSpeedMbps: Double = 0.0,
+    val liveDownloadMbps: Double = 0.0,
+    val liveUploadMbps: Double = 0.0,
     val result: SpeedTestResult? = null,
     val history: List<SpeedTestResult> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val detailResult: SpeedTestResult? = null
 )
 
 class SpeedTestViewModel @javax.inject.Inject constructor(
@@ -45,7 +48,15 @@ class SpeedTestViewModel @javax.inject.Inject constructor(
         viewModelScope.launch {
             val url = preferences.speedTestServerUrl.first()
             _state.update {
-                it.copy(isRunning = true, phase = TestPhase.PINGING, error = null)
+                it.copy(
+                    isRunning = true,
+                    phase = TestPhase.PINGING,
+                    error = null,
+                    result = null,
+                    currentSpeedMbps = 0.0,
+                    liveDownloadMbps = 0.0,
+                    liveUploadMbps = 0.0
+                )
             }
             speedTestRepository.runTest(url)
                 .catch { e ->
@@ -66,11 +77,20 @@ class SpeedTestViewModel @javax.inject.Inject constructor(
                         else -> _state.value.phase
                     }
                     _state.update {
-                        it.copy(
+                        val next = it.copy(
                             phase = phase,
                             currentSpeedMbps = progress.currentMbps,
                             isRunning = phase != TestPhase.DONE
                         )
+                        when (phase) {
+                            TestPhase.DOWNLOADING -> next.copy(liveDownloadMbps = progress.currentMbps)
+                            TestPhase.UPLOADING -> next.copy(liveUploadMbps = progress.currentMbps)
+                            TestPhase.DONE -> next.copy(
+                                liveDownloadMbps = progress.result?.downloadMbps ?: it.liveDownloadMbps,
+                                liveUploadMbps = progress.result?.uploadMbps ?: it.liveUploadMbps
+                            )
+                            else -> next
+                        }
                     }
                     if (phase == TestPhase.DONE) {
                         val latest = progress.result ?: speedTestRepository.getLatestResult().first()
@@ -81,5 +101,13 @@ class SpeedTestViewModel @javax.inject.Inject constructor(
                     }
                 }
         }
+    }
+
+    fun openDetail(result: SpeedTestResult) {
+        _state.update { it.copy(detailResult = result) }
+    }
+
+    fun dismissDetail() {
+        _state.update { it.copy(detailResult = null) }
     }
 }

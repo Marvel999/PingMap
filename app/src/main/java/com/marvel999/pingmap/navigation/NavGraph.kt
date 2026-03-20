@@ -12,7 +12,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.marvel999.pingmap.core.ui.navigation.NavTab
 import com.marvel999.pingmap.core.ui.navigation.PingMapBottomNav
+import com.marvel999.pingmap.ui.history.HistoryScreen
+import com.marvel999.pingmap.ui.history.HistoryViewModel
 import com.marvel999.pingmap.ui.home.HomeScreen
+import com.marvel999.pingmap.ui.settings.SettingsScreen
+import com.marvel999.pingmap.ui.settings.SettingsViewModel
 import com.marvel999.pingmap.ui.home.HomeViewModel
 import com.marvel999.pingmap.ui.tools.ToolsScreen
 import com.marvel999.pingmap.feature.wifi.ui.WifiScanScreen
@@ -43,8 +47,7 @@ fun PingMapNavGraph(
                 NavTab.HOME.route,
                 NavTab.WIFI.route,
                 NavTab.SPEED.route,
-                NavTab.DEVICES.route,
-                NavTab.TOOLS.route
+                NavTab.SETTINGS.route
             )
             if (currentRoute in topLevelRoutes) {
                 PingMapBottomNav(currentRoute ?: NavTab.HOME.route) { tab ->
@@ -83,12 +86,29 @@ fun PingMapNavGraph(
                 val vm = viewModel<SpeedTestViewModel>(factory = viewModelFactory)
                 SpeedTestScreen(viewModel = vm)
             }
-            composable(NavTab.DEVICES.route) {
-                val vm = viewModel<DeviceDiscoveryViewModel>(factory = viewModelFactory)
-                DeviceListScreen(viewModel = vm)
+            composable(AppRoutes.HISTORY) {
+                val vm = viewModel<HistoryViewModel>(factory = viewModelFactory)
+                HistoryScreen(
+                    viewModel = vm,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
-            composable(NavTab.TOOLS.route) {
-                ToolsScreen(onNavigate = { route -> navController.navigate(route) })
+            composable(AppRoutes.DEVICES) {
+                val vm = viewModel<DeviceDiscoveryViewModel>(factory = viewModelFactory)
+                DeviceListScreen(
+                    viewModel = vm,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable(AppRoutes.TOOLS) {
+                ToolsScreen(
+                    onNavigate = { route -> navController.navigate(route) },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable(NavTab.SETTINGS.route) {
+                val vm = viewModel<SettingsViewModel>(factory = viewModelFactory)
+                SettingsScreen(viewModel = vm)
             }
             composable("ping") {
                 val vm = viewModel<PingViewModel>(factory = viewModelFactory)

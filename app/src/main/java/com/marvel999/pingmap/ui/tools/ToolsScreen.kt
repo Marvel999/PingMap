@@ -11,12 +11,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Radar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,15 +31,31 @@ import com.marvel999.pingmap.core.ui.components.PingMapCard
 import com.marvel999.pingmap.core.ui.components.SectionHeader
 import com.marvel999.pingmap.core.ui.theme.PingMapColors
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ToolsScreen(onNavigate: (String) -> Unit = {}) {
+fun ToolsScreen(
+    onNavigate: (String) -> Unit = {},
+    onNavigateBack: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(PingMapColors.White)
-            .padding(20.dp)
     ) {
-        SectionHeader("Tools", "Network diagnostics")
+        TopAppBar(
+            title = { Text("Tools", style = MaterialTheme.typography.titleLarge) },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = PingMapColors.White,
+                titleContentColor = PingMapColors.TextPrimary
+            )
+        )
+        Column(modifier = Modifier.padding(20.dp)) {
+        SectionHeader("Network diagnostics", null)
         Spacer(Modifier.height(16.dp))
         ToolCard(
             title = "Ping",
@@ -56,6 +77,7 @@ fun ToolsScreen(onNavigate: (String) -> Unit = {}) {
             icon = Icons.Outlined.Map,
             onClick = { onNavigate("signal_map") }
         )
+        }
     }
 }
 

@@ -31,11 +31,11 @@ override fun runTest(testUrl: String): Flow<SpeedTestProgress> = callbackFlow {
         trySend(SpeedTestProgress("Ping", 0.0))
 
         trySend(SpeedTestProgress("Download", 0.0))
-        val downloadMbps = measureDownloadSpeed(testUrl) { trySend(SpeedTestProgress("Download", it)) }
+        val downloadMbps = measureDownloadSpeed(testUrl, durationSeconds = 6) { trySend(SpeedTestProgress("Download", it)) }
 
         trySend(SpeedTestProgress("Upload", 0.0))
         val uploadUrl = if (testUrl.contains("__down")) testUrl.replace("__down", "__up") else testUrl
-        val uploadMbps = measureUploadSpeed(uploadUrl) { trySend(SpeedTestProgress("Upload", it)) }
+        val uploadMbps = measureUploadSpeed(uploadUrl, durationSeconds = 6) { trySend(SpeedTestProgress("Upload", it)) }
 
         val result = SpeedTestResult(
             downloadMbps = downloadMbps,
@@ -76,25 +76,32 @@ override fun runTest(testUrl: String): Flow<SpeedTestProgress> = callbackFlow {
 
     private suspend fun measureDownloadSpeed(
         url: String,
+        durationSeconds: Int = 6,
         onProgress: (Double) -> Unit
     ): Double = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(url).build()
         var totalBytes = 0L
         val startTime = System.currentTimeMillis()
+        val durationMs = durationSeconds * 1000L
         try {
             okHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@withContext 0.0
                 val body = response.body ?: return@withContext 0.0
                 val buffer = ByteArray(8192)
                 body.byteStream().use { input ->
-                    while (true) {
-                        val read = input.read(buffer)
-                        if (read == -1) break
-                        totalBytes += read
-                        val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-                        if (elapsed > 0) {
-                            val mbps = (totalBytes * 8) / (elapsed * 1_000_000)
-                            onProgress(mbps)
+                    var done = false
+                    while (!done) {
+                        val timedOut = System.currentTimeMillis() - startTime >= durationMs
+                        val read = if (timedOut) -1 else input.read(buffer)
+                        if (timedOut || read == -1) {
+                            done = true
+                        } else {
+                            totalBytes += read
+                            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
+                            if (elapsed > 0) {
+                                val mbps = (totalBytes * 8) / (elapsed * 1_000_000)
+                                onProgress(mbps)
+                            }
                         }
                     }
                 }
@@ -107,24 +114,38 @@ override fun runTest(testUrl: String): Flow<SpeedTestProgress> = callbackFlow {
         (totalBytes * 8) / (totalSec * 1_000_000)
     }
 
-    private suspend fun measureUploadSpeed(url: String, onProgress: (Double) -> Unit): Double =
-        withContext(Dispatchers.IO) {
-            val size = 2_000_000
-            val data = ByteArray(size) { 0x41 }
-            val startTime = System.currentTimeMillis()
-            try {
-                val mediaType = "application/octet-stream".toMediaType()
-        val request = okhttp3.RequestBody.create(mediaType, data)
-                val req = Request.Builder().url(url).post(request).build()
+    private suspend fun measureUploadSpeed(
+        url: String,
+        durationSeconds: Int = 6,
+        onProgress: (Double) -> Unit
+    ): Double = withContext(Dispatchers.IO) {
+        val chunkSize = 512 * 1024 // 512 KB per chunk
+        val data = ByteArray(chunkSize) { 0x41 }
+        val mediaType = "application/octet-stream".toMediaType()
+        var totalBytes = 0L
+        val startTime = System.currentTimeMillis()
+        val durationMs = durationSeconds * 1000L
+        try {
+            var stopUpload = false
+            while (System.currentTimeMillis() - startTime < durationMs && !stopUpload) {
+                val body = okhttp3.RequestBody.create(mediaType, data)
+                val req = Request.Builder().url(url).post(body).build()
                 okHttpClient.newCall(req).execute().use { response ->
-                    if (!response.isSuccessful) return@withContext 0.0
+                    if (!response.isSuccessful) stopUpload = true
+                    else totalBytes += chunkSize
                 }
-            } catch (_: Exception) {
-                return@withContext 0.0
+                val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
+                if (elapsed > 0) {
+                    val mbps = (totalBytes * 8) / (elapsed * 1_000_000)
+                    onProgress(mbps)
+                }
             }
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-            if (elapsed <= 0) 0.0 else (size * 8) / (elapsed * 1_000_000)
+        } catch (_: Exception) {
+            // use totalBytes so far
         }
+        val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
+        if (elapsed <= 0) 0.0 else (totalBytes * 8) / (elapsed * 1_000_000)
+    }
 }
 
 private fun SpeedTestResult.toEntity() = SpeedTestEntity(

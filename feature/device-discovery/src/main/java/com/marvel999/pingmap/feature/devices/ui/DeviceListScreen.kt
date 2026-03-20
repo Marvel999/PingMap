@@ -14,13 +14,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.DevicesOther
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,8 +35,12 @@ import com.marvel999.pingmap.core.ui.components.PingMapCard
 import com.marvel999.pingmap.core.ui.theme.PingMapColors
 import com.marvel999.pingmap.feature.devices.domain.NetworkDevice
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceListScreen(viewModel: DeviceDiscoveryViewModel) {
+fun DeviceListScreen(
+    viewModel: DeviceDiscoveryViewModel,
+    onNavigateBack: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsState()
 
     Column(
@@ -40,28 +48,33 @@ fun DeviceListScreen(viewModel: DeviceDiscoveryViewModel) {
             .fillMaxSize()
             .background(PingMapColors.White)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text("Devices on Network", style = MaterialTheme.typography.headlineMedium)
-                Text(
-                    "${state.devices.size} found" + if (state.subnet.isNotEmpty()) " · ${state.subnet}" else "",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            IconButton(onClick = { viewModel.startScan() }, enabled = !state.isScanning) {
-                if (state.isScanning) {
-                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(Icons.Outlined.Refresh, contentDescription = "Scan")
+        TopAppBar(
+            title = { Text("Devices on network", style = MaterialTheme.typography.titleLarge) },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-            }
-        }
+            },
+            actions = {
+                IconButton(onClick = { viewModel.startScan() }, enabled = !state.isScanning) {
+                    if (state.isScanning) {
+                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(Icons.Outlined.Refresh, contentDescription = "Scan")
+                    }
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = PingMapColors.White,
+                titleContentColor = PingMapColors.TextPrimary
+            )
+        )
+        Text(
+            "${state.devices.size} found" + if (state.subnet.isNotEmpty()) " · ${state.subnet}" else "",
+            style = MaterialTheme.typography.bodyMedium,
+            color = PingMapColors.TextSecondary,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+        )
 
         state.error?.let { msg ->
             Text(
