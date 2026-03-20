@@ -71,7 +71,7 @@ class HomeViewModel @javax.inject.Inject constructor(
         viewModelScope.launch {
             preferences.backgroundMonitoringEnabled.collect { enabled ->
                 _state.update { it.copy(backgroundMonitoringEnabled = enabled) }
-                if (enabled) MonitorScheduler.start(context)
+                if (enabled) MonitorScheduler.start(context) else MonitorScheduler.stop(context)
                 monitoringRefreshJob?.cancel()
                 monitoringRefreshJob = null
                 if (enabled) {

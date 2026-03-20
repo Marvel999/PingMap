@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
@@ -16,7 +15,8 @@ data class SettingsUiState(
     val showExpertDetails: Boolean = false,
     val saveScanHistory: Boolean = true,
     val runSpeedTestAuto: Boolean = false,
-    val language: String = "en"
+    val language: String = "en",
+    val backgroundMonitoringEnabled: Boolean = false
 )
 
 class SettingsViewModel @javax.inject.Inject constructor(
@@ -29,23 +29,26 @@ class SettingsViewModel @javax.inject.Inject constructor(
     init {
         viewModelScope.launch {
             combine(
-                preferences.autoScanOnOpen,
-                preferences.warnUnsafeNetwork,
-                preferences.showExpertDetails
-            ) { a, b, c -> Triple(a, b, c) }.combine(
+                combine(
+                    preferences.autoScanOnOpen,
+                    preferences.warnUnsafeNetwork,
+                    preferences.showExpertDetails
+                ) { a, b, c -> Triple(a, b, c) },
                 combine(
                     preferences.saveScanHistory,
                     preferences.runSpeedTestAuto,
                     preferences.language
-                ) { d, e, f -> Triple(d, e, f) }
-            ) { t1, t2 ->
+                ) { d, e, f -> Triple(d, e, f) },
+                preferences.backgroundMonitoringEnabled
+            ) { t1, t2, monitoring ->
                 SettingsUiState(
                     autoScanOnOpen = t1.first,
                     warnUnsafeNetwork = t1.second,
                     showExpertDetails = t1.third,
                     saveScanHistory = t2.first,
                     runSpeedTestAuto = t2.second,
-                    language = t2.third
+                    language = t2.third,
+                    backgroundMonitoringEnabled = monitoring
                 )
             }.collect { _state.value = it }
         }
@@ -69,6 +72,10 @@ class SettingsViewModel @javax.inject.Inject constructor(
 
     fun setRunSpeedTestAuto(enabled: Boolean) {
         viewModelScope.launch { preferences.setRunSpeedTestAuto(enabled) }
+    }
+
+    fun setBackgroundMonitoringEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferences.setBackgroundMonitoringEnabled(enabled) }
     }
 
     fun setLanguage(code: String) {

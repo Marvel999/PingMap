@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -115,30 +114,15 @@ fun HomeScreen(
                 }
             },
             actions = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                IconButton(
+                    onClick = { onScan() },
+                    enabled = !state.isScanning,
                     modifier = Modifier.padding(end = 4.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            if (state.ssid != "Not connected") "On Wi‑Fi" else "No Wi‑Fi",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (state.ssid != "Not connected") PingMapColors.SoftGreen else PingMapColors.TextSecondary
-                        )
-                        Box(
-                            Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(if (state.ssid != "Not connected") PingMapColors.SoftGreen else PingMapColors.SoftRed)
-                        )
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    IconButton(onClick = { onScan() }, enabled = !state.isScanning) {
-                        if (state.isScanning) {
-                            CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp, color = PingMapColors.SoftBlue)
-                        } else {
-                            Icon(Icons.Outlined.Refresh, contentDescription = "Scan for WiFi networks")
-                        }
+                    if (state.isScanning) {
+                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp, color = PingMapColors.SoftBlue)
+                    } else {
+                        Icon(Icons.Outlined.Refresh, contentDescription = "Scan for WiFi networks")
                     }
                 }
             },

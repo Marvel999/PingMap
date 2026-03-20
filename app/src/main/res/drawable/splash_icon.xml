@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Full artwork from ic_launcher_logo; inset keeps edges inside adaptive-icon safe zone -->
+<!-- App logo on splash (same asset as launcher); inset avoids tight circular mask on some OEMs -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <inset
-            android:drawable="@drawable/app_logo"
-            />
+            android:drawable="@drawable/app_logo"/>
     </item>
 </layer-list>

@@ -46,6 +46,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         Spacer(Modifier.height(12.dp))
         PingMapCard {
             SettingSwitch(
+                title = "Background monitoring",
+                subtitle = "Foreground notification and periodic checks while enabled (uses battery)",
+                checked = state.backgroundMonitoringEnabled,
+                onCheckedChange = viewModel::setBackgroundMonitoringEnabled
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        PingMapCard {
+            SettingSwitch(
                 title = "Warn if unsafe network",
                 subtitle = "Notify if your connected network score is below 20",
                 checked = state.warnUnsafeNetwork,

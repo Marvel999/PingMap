@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,11 +29,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.marvel999.pingmap.core.ui.charts.ChannelCongestionChart
@@ -68,6 +72,10 @@ fun WifiScanScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshConnectionStatus()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -93,12 +101,37 @@ fun WifiScanScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text("WiFi Networks", style = MaterialTheme.typography.headlineMedium)
-                Text(
-                    if (state.isScanning) "Scanning..." else "${state.networks.size} networks found",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val onWifi = state.connectedSsid != "Not connected"
+                    Text(
+                        text = if (onWifi) "On Wi‑Fi" else "No Wi‑Fi",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (onWifi) PingMapColors.SoftGreen else PingMapColors.TextSecondary
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(if (onWifi) PingMapColors.SoftGreen else PingMapColors.SoftRed)
+                    )
+                    Text(
+                        text = "·",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PingMapColors.TextSecondary
+                    )
+                    Text(
+                        text = if (state.isScanning) "Scanning…" else "${state.networks.size} networks found",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PingMapColors.TextSecondary
+                    )
+                }
             }
             IconButton(onClick = { onScanClick() }, enabled = !state.isScanning) {
                 if (state.isScanning) {
